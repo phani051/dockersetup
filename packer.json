@@ -1,0 +1,51 @@
+{
+    "_comment" : "Create a AWS AMI ith AMZ Linux 2018 with Java and Tomcat",
+    "variables": {
+      
+      "region": "",
+      "source_ami":"",
+      "instance_type":"",
+      "vpc_id": "",
+      "subnet_id": ""
+    },
+    "_comment1" : "packer build -var \"aws_secret_key=foo\" template.json",
+    "_comment2" : "packer build -var-file packer-vars.json template.json",
+    "builders": [{
+      
+      "type": "amazon-ebs",
+      "region": "{{user `region`}}",
+      "source_ami": "{{user `source_ami`}}",
+      "instance_type": "{{user `instance_type`}}",
+      "ssh_username": "ubuntu",
+      "ami_name": "Docker-ubuntu-{{isotime | clean_resource_name}}",
+      "vpc_id": "{{user `vpc_id`}}",
+      "subnet_id": "{{user `subnet_id`}}",
+      "tags": {
+        "Name": "Docker-ubuntu-{{isotime | clean_resource_name}}"
+      }
+    }],
+    "provisioners": [{
+      "type": "shell",
+      "inline": [
+        "sleep 30",
+        "sudo apt update -y",
+        "curl https://get.docker.com | bash"
+        ]
+    },
+    {
+            "type": "file",
+            "source": "docker.service",
+            "destination": "/tmp/docker.service"
+    },
+    {
+        "type": "shell",
+        "inline": [
+            "sudo cp /tmp/docker.service /lib/systemd/system/docker.service",
+            "sudo usermod -a -G docker ubuntu",
+            "sudo systemctl daemon-reload",
+            "sudo service docker restart"
+        ]
+
+    }
+]
+  }
